@@ -85,36 +85,42 @@ class _ImageScreenState extends State<ImageScreen> {
       appBar: AppBar(
         title: const Text('Laboratorio #2'),
       ),
-      // implement the masonry layout
-      body: MasonryGridView.count(
-        controller: _scrollController,
-        itemCount: _images.length + 1,
-        padding: const EdgeInsets.symmetric(vertical: 30, horizontal: 10),
-        // the number of columns
-        crossAxisCount: 3,
-        // vertical gap between two items
-        mainAxisSpacing: 4,
-        // horizontal gap between two items
-        crossAxisSpacing: 4,
-        itemBuilder: (context, index) {
-          if (index < _images.length) {
-            final image = _images[index];
-            return Card(
-              // Replace the color with an image
-              child: CachedNetworkImage(
-                imageUrl: image.imageUrl,
-                placeholder: (context, url) => CircularProgressIndicator(),
-                errorWidget: (context, url, error) => Icon(Icons.error),
-              ),
-            );
-          } else if (_isLoading) {
-            return Padding(
-              padding: EdgeInsets.all(8.0),
-              child: Center(child: CircularProgressIndicator()),
-            );
+      body: OrientationBuilder(
+        builder: (context, orientation) {
+          int crossAxisCount;
+          if (orientation == Orientation.portrait) {
+            crossAxisCount = 3;
           } else {
-            return Container();
+            crossAxisCount = 6;
           }
+
+          return MasonryGridView.count(
+            controller: _scrollController,
+            itemCount: _images.length + 1,
+            padding: const EdgeInsets.symmetric(vertical: 30, horizontal: 10),
+            crossAxisCount: crossAxisCount,
+            mainAxisSpacing: 4,
+            crossAxisSpacing: 4,
+            itemBuilder: (context, index) {
+              if (index < _images.length) {
+                final image = _images[index];
+                return Card(
+                  child: CachedNetworkImage(
+                    imageUrl: image.imageUrl,
+                    placeholder: (context, url) => CircularProgressIndicator(),
+                    errorWidget: (context, url, error) => Icon(Icons.error),
+                  ),
+                );
+              } else if (_isLoading) {
+                return Padding(
+                  padding: EdgeInsets.all(8.0),
+                  child: Center(child: CircularProgressIndicator()),
+                );
+              } else {
+                return Container();
+              }
+            },
+          );
         },
       ),
     );

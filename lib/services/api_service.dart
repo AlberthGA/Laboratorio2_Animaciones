@@ -5,7 +5,7 @@ import '/models/image_model.dart';
 class ApiService {
   final String baseUrl = 'https://picsum.photos';
   final String apiEndpoint = '/v2/list';
-  final int perPage = 30;
+  final int perPage = 15;
 
   Future<List<ImageModel>> fetchImages(int page) async {
     final response = await http.get(
