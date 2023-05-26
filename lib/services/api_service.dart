@@ -7,9 +7,11 @@ class ApiService {
   final String apiEndpoint = '/v2/list';
   final int perPage = 15;
 
-  Future<List<ImageModel>> fetchImages(int page) async {
+  Future<List<ImageModel>> fetchImages(int page,
+      {String filter = 'all'}) async {
     final response = await http.get(
-      Uri.parse('$baseUrl$apiEndpoint?page=$page&limit=$perPage'),
+      Uri.parse(
+          '$baseUrl$apiEndpoint?page=$page&limit=$perPage&filter=$filter'),
     );
 
     if (response.statusCode == 200) {

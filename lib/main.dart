@@ -5,12 +5,13 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'dart:math';
 
-
 void main() {
-  runApp( MyApp());
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -19,22 +20,24 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.blue,
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
-      home: ImageScreen(),
+      home: const ImageScreen(),
     );
   }
 }
+
 class ImageScreen extends StatefulWidget {
+  const ImageScreen({super.key});
+
   @override
   _ImageScreenState createState() => _ImageScreenState();
 }
-
-
 
 class _ImageScreenState extends State<ImageScreen> {
   final ApiService apiService = ApiService();
   final ScrollController _scrollController = ScrollController();
   int _currentPage = 1;
-  List<ImageModel> _images = [];
+  String _selectedFilter = 'all';
+  final List<ImageModel> _images = [];
   bool _isLoading = false;
 
   @override
@@ -57,7 +60,7 @@ class _ImageScreenState extends State<ImageScreen> {
 
     try {
       final List<ImageModel> images =
-          await apiService.fetchImages(_currentPage);
+          await apiService.fetchImages(_currentPage, filter: _selectedFilter);
       setState(() {
         _images.addAll(images);
         _currentPage++;
@@ -78,12 +81,40 @@ class _ImageScreenState extends State<ImageScreen> {
       _loadImages();
     }
   }
-  
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Laboratorio #2'),
+        actions: [
+          DropdownButton<String>(
+            value: _selectedFilter,
+            onChanged: (String? newValue) {
+              setState(() {
+                _selectedFilter = newValue!;
+                _images.clear();
+                _currentPage = 1;
+                _loadImages();
+              });
+            },
+            items: const [
+              DropdownMenuItem(
+                value: 'all',
+                child: Text('All'),
+              ),
+              DropdownMenuItem(
+                value: 'nature',
+                child: Text('Nature'),
+              ),
+              DropdownMenuItem(
+                value: 'animals',
+                child: Text('Animals'),
+              ),
+              // Agrega más opciones de filtro si es necesario
+            ],
+          ),
+        ],
       ),
       body: OrientationBuilder(
         builder: (context, orientation) {
@@ -107,12 +138,14 @@ class _ImageScreenState extends State<ImageScreen> {
                 return Card(
                   child: CachedNetworkImage(
                     imageUrl: image.imageUrl,
-                    placeholder: (context, url) => CircularProgressIndicator(),
-                    errorWidget: (context, url, error) => Icon(Icons.error),
+                    placeholder: (context, url) =>
+                        const CircularProgressIndicator(),
+                    errorWidget: (context, url, error) =>
+                        const Icon(Icons.error),
                   ),
                 );
               } else if (_isLoading) {
-                return Padding(
+                return const Padding(
                   padding: EdgeInsets.all(8.0),
                   child: Center(child: CircularProgressIndicator()),
                 );
@@ -126,5 +159,3 @@ class _ImageScreenState extends State<ImageScreen> {
     );
   }
 }
-
-
