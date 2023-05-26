@@ -1,77 +1,124 @@
 import 'package:flutter/material.dart';
+import 'services/api_service.dart';
+import 'models/image_model.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
+import 'dart:math';
+
 
 void main() {
-  runApp(const MyApp());
+  runApp( MyApp());
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'Lorem Picsum Images',
       theme: ThemeData(
-   
         primarySwatch: Colors.blue,
+        visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      home: ImageScreen(),
     );
   }
 }
-
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-
-
-  final String title;
-
+class ImageScreen extends StatefulWidget {
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
+  _ImageScreenState createState() => _ImageScreenState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
 
-  void _incrementCounter() {
-    setState(() {
-     
-      _counter++;
-    });
+
+class _ImageScreenState extends State<ImageScreen> {
+  final ApiService apiService = ApiService();
+  final ScrollController _scrollController = ScrollController();
+  int _currentPage = 1;
+  List<ImageModel> _images = [];
+  bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadImages();
+    _scrollController.addListener(_scrollListener);
   }
 
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _loadImages() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final List<ImageModel> images =
+          await apiService.fetchImages(_currentPage);
+      setState(() {
+        _images.addAll(images);
+        _currentPage++;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+      });
+      print('Error loading images: $e');
+    }
+  }
+
+  void _scrollListener() {
+    if (!_isLoading &&
+        _scrollController.position.pixels ==
+            _scrollController.position.maxScrollExtent) {
+      _loadImages();
+    }
+  }
+  
   @override
   Widget build(BuildContext context) {
-
     return Scaffold(
       appBar: AppBar(
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
+        title: const Text('Laboratorio #2'),
       ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-        child: Column(
-        
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text(
-              'You have pushed the button this many times:',
-            ),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-          ],
-        ),
+      // implement the masonry layout
+      body: MasonryGridView.count(
+        controller: _scrollController,
+        itemCount: _images.length + 1,
+        padding: const EdgeInsets.symmetric(vertical: 30, horizontal: 10),
+        // the number of columns
+        crossAxisCount: 3,
+        // vertical gap between two items
+        mainAxisSpacing: 4,
+        // horizontal gap between two items
+        crossAxisSpacing: 4,
+        itemBuilder: (context, index) {
+          if (index < _images.length) {
+            final image = _images[index];
+            return Card(
+              // Replace the color with an image
+              child: CachedNetworkImage(
+                imageUrl: image.imageUrl,
+                placeholder: (context, url) => CircularProgressIndicator(),
+                errorWidget: (context, url, error) => Icon(Icons.error),
+              ),
+            );
+          } else if (_isLoading) {
+            return Padding(
+              padding: EdgeInsets.all(8.0),
+              child: Center(child: CircularProgressIndicator()),
+            );
+          } else {
+            return Container();
+          }
+        },
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
     );
   }
 }
+
+
